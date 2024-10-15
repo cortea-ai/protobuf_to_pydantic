@@ -155,38 +155,27 @@ class FileDescriptorProtoToCode(BaseP2C):
                 comment_content = "# " + remove_comment_last_n(trailing_comments)
         return comment_info_dict, desc_content, comment_content
 
-    def _enum(self, enums: Iterable[EnumDescriptorProto], scl_prefix: SourceCodeLocation, indent: int = 0) -> List[str]:
-        """
-        e.g:
-            enums:
-                {
-                    "name": "State",
-                    [
-                        "value": {
-                            name: "INACTIVE"
-                            number: 0
-                        }
-                    ]
-                }
-            python code:
-                from enum import IntEnum
-
-                class State(IntEnum):
-                    INACTIVE = 0
-        """
+    def _enum(
+        self,
+        enums: Iterable[EnumDescriptorProto],
+        scl_prefix: SourceCodeLocation,
+        indent: int = 0,
+    ) -> List[str]:
         if not enums:
             return []
-        self._add_import_code("enum", "IntEnum")
+        self._add_import_code("enum", "StrEnum")
         content_list = []
         for i, enum in enumerate(enums):
             class_name = enum.name if enum.name not in PYTHON_RESERVED else "_r_" + enum.name
-            content = " " * indent + f"class {class_name}(IntEnum):"
+            content = " " * indent + f"class {class_name}(StrEnum):"
             _, desc_content, comment_content = self.add_class_desc(scl_prefix + [i], indent)
             if comment_content:
                 content += comment_content
             content += "\n" + desc_content
             for enum_item in enum.value:
-                content += " " * (self.code_indent + indent) + f"{enum_item.name} = {enum_item.number}\n"
+                content += (
+                    " " * (self.code_indent + indent) + f'{enum_item.name} = "{enum_item.name}"\n'
+                )
             content_list.append(content)
         return content_list
 
