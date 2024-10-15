@@ -464,6 +464,10 @@ class FileDescriptorProtoToCode(BaseP2C):
             if not field_info_dict.get("json_schema_extra", None):
                 field_info_dict.pop("json_schema_extra")
 
+        if hasattr(field_info_dict.get("default_factory"), "__name__") and\
+            field_info_dict["default_factory"].__name__ == "none_factory":
+            type_str = f"typing.Optional[{type_str}]"
+
         field_info_str: str = (
             ", ".join(
                 [
