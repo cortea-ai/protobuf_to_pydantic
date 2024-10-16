@@ -35,11 +35,11 @@ if not _pydantic_adapter.is_v1:
 
     message_name_type_dict["Duration"] = Annotated[datetime.timedelta, BeforeValidator(Timedelta.validate)]
 python_type_default_value_dict: Dict[type, Any] = {
-    float: 0.0,
-    int: 0,
-    bool: False,
-    str: "",
-    bytes: b"",
+    float: None,
+    int: None,
+    bool: None,
+    str: None,
+    bytes: None,
 }
 protobuf_desc_python_type_dict: Dict[int, Type] = {
     FieldDescriptor.TYPE_DOUBLE: float,

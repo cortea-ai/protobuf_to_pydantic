@@ -304,7 +304,7 @@ class FileDescriptorProtoToCode(BaseP2C):
         elif field.type == 14:
             # enum handle
             type_str = field.type_name.split(".")[-1]
-            field_info_default_value = 0
+            field_info_default_value = None
             rule_type_str = "enum"
             root_desc_enum_name = {i.name for i in root_desc.enum_type}
             if type_str in root_desc_enum_name:
@@ -449,6 +449,8 @@ class FileDescriptorProtoToCode(BaseP2C):
                 "default", _pydantic_adapter.PydanticUndefined
             ) is _pydantic_adapter.PydanticUndefined and not field_info_dict.get("default_factory", None):
                 field_info_dict["default"] = None
+        else:
+            del field_info_dict["default"]
 
         # arranging  field info parameters
         for key in FieldInfo.__slots__:
@@ -467,6 +469,9 @@ class FileDescriptorProtoToCode(BaseP2C):
         if hasattr(field_info_dict.get("default_factory"), "__name__") and\
             field_info_dict["default_factory"].__name__ == "none_factory":
             type_str = f"typing.Optional[{type_str}]"
+        elif field.label != field.LABEL_REPEATED and "Optional" not in type_str:
+            field_info_dict.pop("default", None)
+            field_info_dict.pop("default_factory", None)
 
         field_info_str: str = (
             ", ".join(
