@@ -449,8 +449,6 @@ class FileDescriptorProtoToCode(BaseP2C):
                 "default", _pydantic_adapter.PydanticUndefined
             ) is _pydantic_adapter.PydanticUndefined and not field_info_dict.get("default_factory", None):
                 field_info_dict["default"] = None
-        else:
-            del field_info_dict["default"]
 
         # arranging  field info parameters
         for key in FieldInfo.__slots__:
