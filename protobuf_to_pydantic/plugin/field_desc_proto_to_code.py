@@ -471,9 +471,6 @@ class FileDescriptorProtoToCode(BaseP2C):
             field_info_dict.pop("default", None)
             field_info_dict.pop("default_factory", None)
 
-        if type_str.startswith("typing.List[") or type_str.startswith("typing.Dict["):
-            type_str = f"typing.Optional[{type_str}]"
-
         field_info_str: str = (
             ", ".join(
                 [
