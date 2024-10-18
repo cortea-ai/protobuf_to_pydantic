@@ -259,8 +259,8 @@ class FileDescriptorProtoToCode(BaseP2C):
                 key_msg, value_msg = message.field
                 self._add_import_code("typing")
                 type_str: str = (
-                    f"typing.Optional[typing.Dict[{self._get_protobuf_type_model(key_msg).py_type_str},"
-                    f" {self._get_protobuf_type_model(value_msg).py_type_str}]]"
+                    f"typing.Dict[{self._get_protobuf_type_model(key_msg).py_type_str},"
+                    f" {self._get_protobuf_type_model(value_msg).py_type_str}]"
                 )
                 field_info_default_factory_value = dict
                 rule_type_str = "map"
@@ -325,7 +325,7 @@ class FileDescriptorProtoToCode(BaseP2C):
         if field.label == field.LABEL_REPEATED and not field.type_name.endswith("Entry"):
             # repeated support
             self._add_import_code("typing")
-            type_str = f"typing.Optional[typing.List[{type_str}]]"
+            type_str = f"typing.List[{type_str}]"
             field_info_default_value = None
             field_info_default_factory_value = list
             rule_type_str = "repeated"
@@ -428,7 +428,7 @@ class FileDescriptorProtoToCode(BaseP2C):
             else:
                 value_type_str = self._get_protobuf_type_model(message.field[1]).py_type_str
             self._add_import_code("typing")
-            type_str = f"typing.Optional[typing.Dict[{key_type_str}, {value_type_str}]]"
+            type_str = f"typing.Dict[{key_type_str}, {value_type_str}]"
 
         # custom field support
         field_class: Optional[Type[FieldInfo]] = field_info_dict.pop("field", None)
@@ -464,10 +464,7 @@ class FileDescriptorProtoToCode(BaseP2C):
             if not field_info_dict.get("json_schema_extra", None):
                 field_info_dict.pop("json_schema_extra")
 
-        if hasattr(field_info_dict.get("default_factory"), "__name__") and\
-            field_info_dict["default_factory"].__name__ == "none_factory":
-            type_str = f"typing.Optional[{type_str}]"
-        elif field.label != field.LABEL_REPEATED and "Optional" not in type_str:
+        if field.label != field.LABEL_REPEATED and "Optional" not in type_str:
             field_info_dict.pop("default", None)
             field_info_dict.pop("default_factory", None)
 
@@ -801,7 +798,7 @@ class FileDescriptorProtoToCode(BaseP2C):
                 use_custom_type = True
                 self._add_import_code("google.protobuf.any_pb2", "Any")
             elif _type_str == "Struct":
-                py_type_str = "typing.Optional[typing.Dict[str, typing.Any]]"
+                py_type_str = "typing.Dict[str, typing.Any]"
                 rule_type_str = "struct"
                 type_factory = dict
             elif field.type_name.startswith(".google.protobuf"):
