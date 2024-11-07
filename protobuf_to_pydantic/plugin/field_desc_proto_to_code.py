@@ -243,6 +243,7 @@ class FileDescriptorProtoToCode(BaseP2C):
         raw_validator_dict = {}
         leading_comments = ""
         trailing_comments = ""
+        is_dict = False
 
         if tuple(scl_prefix) in self.source_code_info_by_scl:
             scl = self.source_code_info_by_scl[tuple(scl_prefix)]
@@ -257,6 +258,7 @@ class FileDescriptorProtoToCode(BaseP2C):
 
             if message.options.map_entry:
                 key_msg, value_msg = message.field
+                is_dict = True
                 self._add_import_code("typing")
                 type_str: str = (
                     f"typing.Dict[{self._get_protobuf_type_model(key_msg).py_type_str},"
@@ -436,7 +438,10 @@ class FileDescriptorProtoToCode(BaseP2C):
             field_name: str = self._get_value_code(field_class)
         else:
             field_name = "Field"
-            self._add_import_code("pydantic", "Field")
+            if map_type_dict:
+                self._import_set.add("from pydantic import Field, field_serializer, SerializationInfo")
+            else:
+                self._add_import_code("pydantic", "Field")
 
         if not _pydantic_adapter.is_v1:
             # pgv or p2p rule no warning required
@@ -488,7 +493,7 @@ class FileDescriptorProtoToCode(BaseP2C):
         if self.config.parse_comment and trailing_comments:
             class_field_content = class_field_content + trailing_comments
         class_field_content = class_field_content + "\n"
-        return validator_handle_content, class_field_content, use_custom_type
+        return validator_handle_content, class_field_content, use_custom_type, is_dict
 
     def _gen_one_of_dict(
         self, desc: DescriptorProto, scl_prefix: SourceCodeLocation, skip_validate_rule: bool
@@ -622,6 +627,8 @@ class FileDescriptorProtoToCode(BaseP2C):
         else:
             self._model_cache[class_name] = ""
 
+        dict_fields = []
+
         self._add_import_code("google.protobuf.message", "Message")
         comment_info_dict, desc_content, comment_content = self.add_class_desc(scl_prefix, indent)
         class_name_content = " " * indent + f"class {class_name}({self.config.base_model_class.__name__}):"
@@ -668,6 +675,9 @@ class FileDescriptorProtoToCode(BaseP2C):
                 class_field_content += _content_tuple[1]
                 if _content_tuple[2]:
                     use_custom_type = True
+                is_dict = _content_tuple[3]
+                if is_dict:
+                    dict_fields.append(field.name)
         if desc.nested_type:
             class_sub_c_str_list.extend(
                 self._message_nested_type_handle(
@@ -731,6 +741,21 @@ class FileDescriptorProtoToCode(BaseP2C):
                 if i
             ]
         )
+
+        if dict_fields:
+            self._add_import_code("json")
+            self._import_set.add("from pydantic import field_serializer, SerializationInfo")
+            padding = " "*8
+            content = content + r"""
+    @field_serializer(
+{fields}
+    )
+    def json_dump(self, v: typing.Dict, info: SerializationInfo):
+        if info.context == "bigquery":
+            return json.dumps(v)
+        return v
+""".format(fields=padding + '"' + f'",\n{padding}"'.join(dict_fields) + '"')
+
         if not any([class_head_content, class_field_content]):
             content += " " * (indent + self.code_indent) + "pass\n"
         self._model_cache[class_name] = content
