@@ -58,8 +58,6 @@ class BaseP2C(object):
 
     head_content: str = (
         "# This is an automatically generated file, please do not change\n"
-        f"# Protobuf Version: {protobuf_version} \n"
-        f"# Pydantic Version: {pydantic_version} \n"
     )
     tail_content: str = ""
 
